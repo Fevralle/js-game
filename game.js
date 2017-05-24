@@ -196,10 +196,6 @@ class LevelParser {
     return plan.map(v => v.split('').map(v => this.obstacleFromSymbol(v)));
   }
 
-    filterActors(v) {
-    return v !== undefined;
-  }
-
   createActors(plan) {
     plan.forEach((v, i) => {
       this.y = i;
@@ -210,7 +206,7 @@ class LevelParser {
           } else {
             return undefined;
           }
-      }).filter(this.filterActors));
+      }).filter(v => v !== undefined));
     });
     return this.actorsArr;
   }
