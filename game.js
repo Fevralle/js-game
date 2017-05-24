@@ -215,16 +215,12 @@ class LevelParser {
     plan.forEach((v, i) => {
       this.y = i;
       this.actorsArr.push(...v.split('').map((v, i) => {
-        if(this.defineActorSymbols(v)){
           var ConstrActor = this.actorFromSymbol(v);
           if (ConstrActor !== undefined) {
           return new ConstrActor(new Vector(i, this.y));
           } else {
             return undefined;
           }
-        } else {
-          return undefined;
-        }
       }).filter(this.filterActors));
     });
     return this.actorsArr;
