@@ -58,6 +58,21 @@ describe('Класс Level', () => {
 
       expect(level.finishDelay).to.equal(1);
     });
+
+    it('Имеет свойство actors, в котором все движущиеся переданные в конструктор', () => {
+      const actors = [ player ];
+      const level = new Level(undefined, actors);
+
+      expect(level.actors).to.eql(actors);
+    });
+
+    it('Имеет свойство player, в котором движущийся объект со свойством type равным player', () => {
+      const player = { type: 'player', title: 'Игрок' };
+      const coin = { type: 'coin', title: 'Монетка' };
+      const level = new Level(undefined, [ player, coin ]);
+
+      expect(level.player).to.equal(player);
+    });
   });
 
   describe('Метод isFinished', () => {
@@ -119,12 +134,12 @@ describe('Класс Level', () => {
     });
 
     it('Вернет undefined если ни один объект игрового поля не пересекается с переданным объектом', () => {
+      const player = new Actor(new Vector(1, 1));
       const level = new Level(undefined, [player, coin]);
-      player.move(1, 1);
 
       const actor = level.actorAt(player);
 
-      expect(actor).to.be.equal(coin);
+      expect(actor).to.be.undefined;
     });
 
     it('Вернет объект игрового поля, который пересекается с переданным объектом', () => {
@@ -205,6 +220,25 @@ describe('Класс Level', () => {
       const wall = level.obstacleAt(position, size);
 
       expect(wall).to.be.equal('lava');
+    });
+
+    it('Вернет строку wall если площадь пересекается со стеной и объект имеет не целочисленные координаты', () => {
+      const level = new Level(wallGrid);
+      const position = new Vector(0.5, 0.5);
+
+      const wall = level.obstacleAt(position, size);
+
+      expect(wall).to.be.equal('wall');
+    });
+
+    it('Вернет строку wall если площадь пересекается со стеной и объект имеет не целочисленный размер', () => {
+      const level = new Level(wallGrid);
+      const position = new Vector(0, 0);
+      const size = new Vector(0.5, 0.5);
+
+      const wall = level.obstacleAt(position, size);
+
+      expect(wall).to.be.equal('wall');
     });
   });
 
