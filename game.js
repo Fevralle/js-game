@@ -199,14 +199,6 @@ class LevelParser {
     );
   }
 
-  defineActorSymbols(symbol) {
-    if ((symbol === '@') || (symbol === 'o') || (symbol === '=') || (symbol === '|') || (symbol === 'v') || (symbol === 'z')){
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   filterActors(v) {
     return v !== undefined;
   }
