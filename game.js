@@ -193,13 +193,10 @@ class LevelParser {
   }
 
   createGrid(plan) {
-    return plan.map(v => v.split('').map(v => v.replace(/[^x!]/, undefined))
-      .map(v => v.replace(/x/, 'wall'))
-      .map(v => v.replace(/!/, 'lava'))
-    );
+    return plan.map(v => v.split('').map(v => this.obstacleFromSymbol(v)));
   }
 
-  filterActors(v) {
+    filterActors(v) {
     return v !== undefined;
   }
 
