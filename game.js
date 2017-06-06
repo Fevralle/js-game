@@ -1,49 +1,37 @@
 'use strict';
 class Vector {
-  constructor(x=0, y=0) {
-    this.x = x;
-    this.y = y;
+  constructor(x, y) {
+    this.x = x || 0;
+    this.y = y || 0;
   }
 
   plus(vectorObj) {
-    // условие лучше обратить и убрать else
-    if(vectorObj instanceof Vector) {
-      // если значение не меняется лучше использовать const
-      // newX - более удачное название переменной
-      var xnew = this.x + vectorObj.x;
-      var ynew = this.y + vectorObj.y;
-      // тут должно быть new Vector
-      return new this.constructor(xnew, ynew);
-    } else {
+    if (!(vectorObj instanceof Vector)) {
       throw new Error('Можно прибавлять к вектору только вектор типа Vector!');
     }
+    const newX = this.x + vectorObj.x;
+    const newY = this.y + vectorObj.y;
+    return new Vector(newX, newY);
   }
 
   times(factor) {
-    var xnew = this.x * factor;
-    var ynew = this.y * factor;
-    // new Vector
-    return new this.constructor(xnew, ynew);
+    var newX = this.x * factor;
+    var newY = this.y * factor;
+    return new Vector(newX, newY);
   }
 }
 
 class Actor {
   constructor(posVect = new Vector(0, 0), sizeVect = new Vector(1, 1), speedVect = new Vector(0, 0)) {
-    // лучше обратить условие и убрать else
-    // проверять тип нужно через instanceof
-    if (Vector.prototype.isPrototypeOf(posVect) && Vector.prototype.isPrototypeOf(sizeVect) && Vector.prototype.isPrototypeOf(speedVect)) {
-      this.pos = posVect;
-      this.size = sizeVect;
-      this.speed = speedVect;
-      // должно быть ниже get type() { }
-      Object.defineProperty(this, 'type', {
-      writable: false,
-      value: 'actor'
-      });
-    } else {
+    if (!(posVect instanceof Vector && sizeVect instanceof Vector && speedVect instanceof Vector)) {
       throw new Error('parameter is not an instance of Vector!');
     }
+    this.pos = posVect;
+    this.size = sizeVect;
+    this.speed = speedVect;
   }
+
+  get type() {return 'actor'}
 
   get left() {return this.pos.x}
 
@@ -56,28 +44,19 @@ class Actor {
   act(){}
 
   isIntersect(actorObj) {
-    // instanceof
-    if (!Actor.prototype.isPrototypeOf(actorObj)) {
-        throw new Error('wrong object type!');
-    }
-
-    // лишняя проверка
-    if (actorObj === 0) {
-        throw new Error('no parameter provided!');
+    if (!(actorObj instanceof Actor)) {
+      throw new Error('not an instance ofActor was passed!');
     }
 
     if (actorObj === this) {
       return false;
     }
 
-    // скобочки можно убрать
-    if ((this.left >= actorObj.right) || (this.top >= actorObj.bottom) ||
-       (actorObj.left >= this.right) || (actorObj.top >= this.bottom)) {
-         return false;
-         // else тут не нужен
-    } else {
-      return true;
+    if (this.left >= actorObj.right || this.top >= actorObj.bottom ||
+        actorObj.left >= this.right || actorObj.top >= this.bottom) {
+      return false;
     }
+    return true;
   }
 }
 
@@ -100,34 +79,23 @@ class Level {
   get width() {
     if (this.grid.length === 0) {
       return 0;
-      // else лишний
-    } else {
-      return this.grid.map(row => row.length).sort((a,b) => b-a)[0];
     }
+    return this.grid.map(row => row.length).sort((a,b) => b-a)[0];
   }
 
   isFinished() {
-    // это же тоже самое, что return this.status !== null && this.finishDelay < 0;
-    if ((this.status !== null) && (this.finishDelay < 0)) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.status !== null && this.finishDelay < 0;
   }
 
   actorAt(actorObj) {
-    // тут нужно проверить, что объект является наследником Actor
-    // сейчас я могу передать {speed: 1} и всё сломается
-    if (!('speed' in actorObj)) {
+    if (!(actorObj instanceof Actor)) {
       throw new Error('Not a moving object!');
     }
-    // === true - не нужно, isIntersect уже возвращает true/false
-    return this.actors.find(actor => actorObj.isIntersect(actor)===true);
+    return this.actors.find(actor => actorObj.isIntersect(actor));
   }
 
   obstacleAt(newPos, actorSize) {
-    // instanceof
-    if (!Vector.prototype.isPrototypeOf(newPos) && !Vector.prototype.isPrototypeOf(actorSize)){
+    if (!(newPos instanceof Vector && actorSize instanceof Vector)) {
       throw new Error('Not an instance of Vector!');
     }
 
@@ -136,38 +104,29 @@ class Level {
     let top = Math.floor(newPos.y);
     let bottom = Math.ceil(top + actorSize.y);
 
-    if ((left < 0) || (top < 0) || (right > this.width)) {
+    if (left < 0 || top < 0 || right > this.width) {
       return 'wall';
     } else if (bottom > this.height) {
       return 'lava';
     } else {
       let area = [];
-      for(let i = top + 1; i < bottom + 1; i++) {
+      for (let i = top + 1; i < bottom + 1; i++) {
         area.push(...this.grid[i].slice(left, right+1));
       }
-      // здесь можно area.find(v  => v);
-      return area.find(v  => v !== undefined);
+      return area.find(v  => v);
     }
   }
 
   removeActor(actorObj) {
     let delIndex = this.actors.indexOf(actorObj);
-    if(delIndex === -1) {
+    if (delIndex === -1) {
       return;
-       // else лишний
-    } else {
-      this.actors.splice(delIndex, 1);
     }
+    this.actors.splice(delIndex, 1);
   }
 
   noMoreActors(type) {
-    let result = this.actors.findIndex(v => v.type === type);
-    // упростить
-    if (result === -1) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.actors.findIndex(v => v.type === type)? true : false;
   }
 
   playerTouched(type, actor) {
@@ -175,11 +134,12 @@ class Level {
       return;
     }
 
-    if ((type === 'lava') || (type === 'fireball')) {
+    if (type === 'lava' || type === 'fireball') {
       this.status = 'lost';
       return;
     }
-    if ((type === 'coin') && (actor.type === 'coin')){
+
+    if (type === 'coin' && actor.type === 'coin') {
       this.removeActor(actor);
       if (this.noMoreActors('coin')) {
         this.status = 'won';
@@ -190,7 +150,7 @@ class Level {
 
 class LevelParser {
   constructor(glossary) {
-    this.glossary = glossary || [];
+    this.glossary = glossary || {};
     this.actorsArr = [];
   }
 
@@ -222,22 +182,79 @@ class LevelParser {
     plan.forEach((v, i) => {
       this.y = i;
       this.actorsArr.push(...v.split('').map((v, i) => {
-          var ConstrActor = this.actorFromSymbol(v);
-          // тут можно просто if (ConstrActor)
-          if (ConstrActor !== undefined) {
-            // помните о форматировании
-            // тут нужно проверить, что созданный объект является наследником Actor
-          return new ConstrActor(new Vector(i, this.y));
-          } else {
-            return undefined;
+        var ConstrActor = this.actorFromSymbol(v);
+        if (ConstrActor instanceof Function) {
+          let newactor = new ConstrActor(new Vector(i, this.y));
+          if (newactor instanceof Actor) {
+            return newactor;
           }
-          // здесь можно просто filter(v => v)
-      }).filter(v => v !== undefined));
+        }
+      }).filter(v => v));
     });
     return this.actorsArr;
   }
 
   parse(plan) {
     return new Level(this.createGrid(plan), this.createActors(plan));
+  }
+}
+
+class Fireball extends Actor {
+  constructor(posVect = new Vector(0, 0), speedVect = new Vector(0, 0)) {
+    super();
+    this.pos = posVect;
+    this.speed = speedVect;
+  }
+
+  get type() {return 'fireball'}
+
+  getNextPosition(time = 1) {
+    return this.pos.plus(this.speed.times(time));
+  }
+
+  handleObstacle() {
+    this.speed = this.speed.times(-1);
+  }
+
+  act(time, levelObj) {
+    let newPos = this.getNextPosition(time)
+    if (!levelObj.obstacleAt(newPos, this.size)) {
+      this.pos = newPos;
+    } else {
+      this.handleObstacle();
+    }
+  }
+}
+
+class HorizontalFireball extends Fireball {
+  constructor(posVect) {
+    super();
+    this.pos = posVect;
+    this.speed = new Vector(2, 0);
+  }
+}
+
+class VerticalFireball extends Fireball {
+  constructor(posVect) {
+    super();
+    this.pos = posVect;
+    this.speed = new Vector(0, 2);
+  }
+}
+
+class FireRain extends Fireball {
+  constructor(posVect) {
+    super();
+    this.pos = posVect;
+    this.speed = new Vector(0, 3);
+    this.startPos = posVect;
+  }
+
+  getNextPosition(time = 1) {
+    return this.pos.plus(this.speed.times(time));
+  }
+
+  handleObstacle() {
+    this.pos = this.startPos;
   }
 }
