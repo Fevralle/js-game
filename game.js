@@ -313,11 +313,11 @@ const actorDict = {
   'o': Coin,
   '|': VerticalFireball,
   'v': FireRain
-}
+};
 
 const parser = new LevelParser(actorDict);
 
 loadLevels().then((level) => JSON.parse(level))
 .then(schemas => {
   runGame(schemas, parser, DOMDisplay);
-})
+});
