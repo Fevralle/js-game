@@ -317,7 +317,7 @@ const actorDict = {
 
 const parser = new LevelParser(actorDict);
 
-loadLevels().then((level) => JSON.parse(level))
+loadLevels().then(string => JSON.parse(string))
 .then(schemas => {
   runGame(schemas, parser, DOMDisplay);
 });
