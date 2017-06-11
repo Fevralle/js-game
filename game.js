@@ -1,9 +1,8 @@
 'use strict';
 class Vector {
-  constructor(x, y) {
-    // лучше это задать через параметры по-умолчанию constructor(x = 0, y = 0) {
-    this.x = x || 0;
-    this.y = y || 0;
+  constructor(x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
   }
 
   plus(vectorObj) {
@@ -16,34 +15,47 @@ class Vector {
   }
 
   times(factor) {
-    // const
-    var newX = this.x * factor;
-    var newY = this.y * factor;
+    const newX = this.x * factor;
+    const newY = this.y * factor;
     return new Vector(newX, newY);
   }
 }
 
 class Actor {
   constructor(posVect = new Vector(0, 0), sizeVect = new Vector(1, 1), speedVect = new Vector(0, 0)) {
-    if (!(posVect instanceof Vector && sizeVect instanceof Vector && speedVect instanceof Vector)) {
-      // лучше разбить на 3 if, а то сейчас по сообщению непонятно где ошибка
-      throw new Error('parameter is not an instance of Vector!');
+    if (!(posVect instanceof Vector)) {
+      throw new Error('the 1st parameter is not an instance of Vector!');
+    }
+    if (!(sizeVect instanceof Vector)) {
+      throw new Error('the 2nd parameter is not an instance of Vector!');
+    }
+    if (!(speedVect instanceof Vector)) {
+      throw new Error('the 3d parameter is not an instance of Vector!');
     }
     this.pos = posVect;
     this.size = sizeVect;
     this.speed = speedVect;
   }
 
-  // в одну строчку лучше не писать - сложнее читается
-  get type() {return 'actor'}
+  get type() {
+    return 'actor';
+  }
 
-  get left() {return this.pos.x}
+  get left() {
+    return this.pos.x;
+  }
 
-  get top() {return this.pos.y}
+  get top() {
+    return this.pos.y;
+  }
 
-  get right() {return this.pos.x + this.size.x}
+  get right() {
+    return this.pos.x + this.size.x;
+  }
 
-  get bottom() {return this.pos.y + this.size.y}
+  get bottom() {
+    return this.pos.y + this.size.y;
+  }
 
   act(){}
 
@@ -65,31 +77,22 @@ class Actor {
 }
 
 class Level {
-  constructor(grid, actors) {
-      // лучше задать через параметры по-умолчанию
-      // и нужно сделать копии массивов через slice или другим способом
-    this.grid = grid || [];
-    this.actors = actors || [];
+  constructor(grid = [], actors = []) {
+    this.grid = grid;
+    this.actors = actors;
+    this.height = this.grid.length;
+    this.width = this.grid.slice().reduce((a, v) => {
+      if (v.length > a) {
+        a = v.length;
+      }
+      return a;
+    }, 0);
     this.status = null;
     this.finishDelay = 1;
   }
 
   get player() {
-    return this.actors.find(actor => actor.type === 'player');
-  }
-
-  get height() {
-      // лучше просто заполнить поле height в конструкторе
-    return this.grid.length;
-  }
-
-  get width() {
-      // тоже лучше в конструкторе
-    if (this.grid.length === 0) {
-      return 0;
-    }
-    // через reduce было бы чуть более изящно, тогда и проверка выше была бы ненужна
-    return this.grid.map(row => row.length).sort((a,b) => b-a)[0];
+    return this.actors.slice().find(actor => actor.type === 'player');
   }
 
   isFinished() {
@@ -115,18 +118,17 @@ class Level {
 
     if (left < 0 || top < 0 || right > this.width) {
       return 'wall';
-      // тут можно убрать else, т.к. if заканчивается на return
-    } else if (bottom > this.height) {
-      return 'lava';
-      // тут тоже
-    } else {
-      let area = [];
-      // круто, но сложно разобраться, попробуйте развернуть, чтобы было понятнее
-      for (let i = top + 1; i < bottom + 1; i++) {
-        area.push(...this.grid[i].slice(left, right+1));
-      }
-      return area.find(v  => v);
     }
+    if (bottom > this.height) {
+      return 'lava';
+    }
+
+    const grid = this.grid.slice();
+    const section =  grid.slice(top + 1, bottom + 1);
+    section.forEach(v => v.slice(left, right+1));
+    const sectionContent = [];
+    section.forEach(v => sectionContent.push(...v));
+    return sectionContent.find(v  => v);
   }
 
   removeActor(actorObj) {
@@ -138,12 +140,9 @@ class Level {
   }
 
   noMoreActors(type) {
-      // по-моему некорректное условие - если элемент будет первым (индекс = 0)
-      // то вернётся false. Тут лучше использовать some или every
-    return this.actors.findIndex(v => v.type === type)? true : false;
+    return !this.actors.some(v => v.type === type);
   }
 
-  // идеаально
   playerTouched(type, actor) {
     if (this.status !== null) {
       return;
@@ -164,21 +163,13 @@ class Level {
 }
 
 class LevelParser {
-  constructor(glossary) {
-      // лучше через значения по умолчанию
-    this.glossary = glossary || {};
+  constructor(glossary = {}) {
+    this.glossary = glossary;
     this.actorsArr = [];
   }
 
   actorFromSymbol(symbol) {
-      // этот метод можно упростить -
-      // просто вернуть значение по ключу из glossary без проверок - будет точно так же работать
-    if (symbol === undefined) {
-      return undefined;
-    }
-    if (symbol in this.glossary) {
-      return this.glossary[symbol];
-    }
+    return this.glossary[symbol];
   }
 
   obstacleFromSymbol(symbol) {
@@ -197,20 +188,18 @@ class LevelParser {
   }
 
   createActors(plan) {
-    plan.forEach((v, i) => {
+    let actorsContainer = plan.map(v => v.split(''));
+    actorsContainer.forEach((v, i) => {
       this.y = i;
-      // сложновато, лучше сделать 2 forEach
-        // здесь модифицируется массив - лучше использовать переменную объявленную в этой функции,
-        // иначе если вызвать мтеод 2 раза массив будет в 2 раза больше
-      this.actorsArr.push(...v.split('').map((v, i) => {
+      v.forEach((v, i) => {
         var ConstrActor = this.actorFromSymbol(v);
         if (ConstrActor instanceof Function) {
           let newactor = new ConstrActor(new Vector(i, this.y));
           if (newactor instanceof Actor) {
-            return newactor;
+            this.actorsArr.push(newactor);
           }
         }
-      }).filter(v => v));
+      });
     });
     return this.actorsArr;
   }
@@ -222,10 +211,7 @@ class LevelParser {
 
 class Fireball extends Actor {
   constructor(posVect = new Vector(0, 0), speedVect = new Vector(0, 0)) {
-    super();
-    // эти поля должны заполняться в конструкторе базового класса
-    this.pos = posVect;
-    this.speed = speedVect;
+    super(posVect, new Vector(1, 1), speedVect);
   }
 
   get type() {return 'fireball'}
@@ -239,42 +225,30 @@ class Fireball extends Actor {
   }
 
   act(time, levelObj) {
-      // точка с запятой
-    let newPos = this.getNextPosition(time)
-        // тут лучше обратить условие, чтобы убрать отрицание в if
-    if (!levelObj.obstacleAt(newPos, this.size)) {
-      this.pos = newPos;
-    } else {
+    let newPos = this.getNextPosition(time);
+    if (levelObj.obstacleAt(newPos, this.size)) {
       this.handleObstacle();
+    } else {
+      this.pos = newPos;
     }
   }
 }
 
 class HorizontalFireball extends Fireball {
   constructor(posVect) {
-    super();
-      // эти поля должны заполняться в конструкторе базового класса
-    this.pos = posVect;
-    this.speed = new Vector(2, 0);
+    super(posVect, new Vector(2, 0));
   }
 }
 
 class VerticalFireball extends Fireball {
   constructor(posVect) {
-    super();
-      // эти поля должны заполняться в конструкторе базового класса
-    this.pos = posVect;
-    this.speed = new Vector(0, 2);
+    super(posVect, new Vector(0, 2));
   }
 }
 
 class FireRain extends Fireball {
   constructor(posVect) {
-    super();
-      // эти поля должны заполняться в конструкторе базового класса
-    this.pos = posVect;
-    this.speed = new Vector(0, 3);
-    // это - нет, это - ок :)
+    super(posVect, new Vector(0, 3));
     this.startPos = posVect;
   }
 
@@ -286,3 +260,81 @@ class FireRain extends Fireball {
     this.pos = this.startPos;
   }
 }
+
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+class Coin extends Actor {
+  constructor(posVect) {
+    super(posVect, new Vector(0.6, 0.6));
+    this.pos = this.pos.plus(new Vector(0.2, 0.1));
+    this.springSpeed = 8;
+    this.springDist = 0.07;
+    this.spring = getRandomArbitrary(0, 2 * Math.PI);
+  }
+
+  get type() {
+    return 'coin';
+  }
+
+  updateSpring(time = 1) {
+    this.spring = this.spring + this.springSpeed*time;
+  }
+
+  getSpringVector() {
+    return new Vector(0, Math.sin(this.spring)*this.springDist);
+  }
+
+  getNextPosition(time = 1) {
+    this.updateSpring(time);
+    return this.pos.plus(this.getSpringVector());
+  }
+
+  act(time) {
+    this.pos = this.getNextPosition(time);
+  }
+}
+
+class Player extends Actor {
+  constructor(posVect) {
+    super(posVect, new Vector(0.8, 1.5));
+    this.pos = this.pos.plus(new Vector(0, -0.5));
+  }
+
+  get type() {
+    return 'player';
+  }
+}
+
+const schemas = [
+  [
+    '         ',
+    '         ',
+    '    =    ',
+    '       o ',
+    '     !xxx',
+    ' @       ',
+    'xxx!     ',
+    '         '
+  ],
+  [
+    '      v  ',
+    '    v    ',
+    '  v      ',
+    '        o',
+    '        x',
+    '@   x    ',
+    'x        ',
+    '         '
+  ]
+];
+const actorDict = {
+  '@': Player,
+  'v': FireRain,
+  '=': HorizontalFireball,
+  'o': Coin
+}
+const parser = new LevelParser(actorDict);
+runGame(schemas, parser, DOMDisplay)
+  .then(() => console.log('Вы выиграли приз!'));
