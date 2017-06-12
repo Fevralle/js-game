@@ -116,7 +116,7 @@ class Level {
     let top = Math.floor(newPos.y);
     let bottom = Math.ceil(top + actorSize.y);
 
-    if (left < 0 || top < 0 || right > this.width) {
+    if (left < 0 || top < 0 || right > this.width-1) {
       return 'wall';
     }
     if (bottom > this.height) {
@@ -302,22 +302,27 @@ class Player extends Actor {
     this.pos = this.pos.plus(new Vector(0, -0.5));
   }
 
+
   get type() {
     return 'player';
   }
 }
 
+const schema = [
+  '         ',
+  '         ',
+  '    =    ',
+  '       o ',
+  '     !xxx',
+  ' @       ',
+  'xxx!     ',
+  '         '
+];
 const actorDict = {
   '@': Player,
-  '=': HorizontalFireball,
-  'o': Coin,
-  '|': VerticalFireball,
-  'v': FireRain
-};
-
+  '=': HorizontalFireball
+}
 const parser = new LevelParser(actorDict);
-
-loadLevels().then(string => JSON.parse(string))
-.then(schemas => {
-  runGame(schemas, parser, DOMDisplay);
-});
+const level = parser.parse(schema);
+runLevel(level, DOMDisplay)
+  .then(status => console.log(`Игрок ${status}`));
