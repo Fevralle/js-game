@@ -119,15 +119,15 @@ class Level {
     if (left < 0 || top < 0 || right > this.width-1) {
       return 'wall';
     }
-    if (bottom > this.height) {
+    if (bottom > this.height-1) {
       return 'lava';
     }
 
     const grid = this.grid.slice();
-    const section =  grid.slice(top + 1, bottom + 1);
-    section.forEach(v => v.slice(left, right+1));
+    const verticalCut =  grid.slice(top, bottom + 1);
+    let horizontalCut = verticalCut.map(v => v.slice(left, right + 1));
     const sectionContent = [];
-    section.forEach(v => sectionContent.push(...v));
+    horizontalCut.forEach(v => sectionContent.push(...v));
     return sectionContent.find(v  => v);
   }
 
@@ -302,27 +302,51 @@ class Player extends Actor {
     this.pos = this.pos.plus(new Vector(0, -0.5));
   }
 
-
   get type() {
     return 'player';
   }
 }
 
-const schema = [
-  '         ',
-  '         ',
-  '    =    ',
-  '       o ',
-  '     !xxx',
-  ' @       ',
-  'xxx!     ',
-  '         '
-];
 const actorDict = {
   '@': Player,
-  '=': HorizontalFireball
-}
+  '=': HorizontalFireball,
+  'o': Coin,
+  '|': VerticalFireball,
+  'v': FireRain
+};
+
+
+const schema = [
+'     v                 ',
+'                       ',
+'                       ',
+'                       ',
+'                       ',
+'  |                    ',
+'  o                 o  ',
+'  x               = x  ',
+'  x          o o    x  ',
+'  x  @       xxxxx  x  ',
+'  xxxxx             x  ',
+'      x!!!!!!!!!!!!!x  ',
+'      xxxxxxxxxxxxxxx  ',
+'                       '
+]
+
+/*
+const schema = [
+    '      v  ',
+    '    v    ',
+    '  v      ',
+    '        o',
+    '        x',
+    '@   x    ',
+    'x        ',
+    '         '
+  ];
+*/
 const parser = new LevelParser(actorDict);
 const level = parser.parse(schema);
 runLevel(level, DOMDisplay)
   .then(status => console.log(`Игрок ${status}`));
+  console.log(level.grid);
