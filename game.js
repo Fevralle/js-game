@@ -315,7 +315,7 @@ const actorDict = {
   'v': FireRain
 };
 
-
+/*
 const schema = [
 '     v                 ',
 '                       ',
@@ -332,21 +332,24 @@ const schema = [
 '      xxxxxxxxxxxxxxx  ',
 '                       '
 ]
+*/
 
-/*
 const schema = [
     '      v  ',
-    '    v    ',
-    '  v      ',
+    '    =    ',
+    '  |      ',
     '        o',
-    '        x',
+    '        x x x x x x x x',
     '@   x    ',
     'x        ',
     '         '
   ];
-*/
+
+
 const parser = new LevelParser(actorDict);
 const level = parser.parse(schema);
 runLevel(level, DOMDisplay)
   .then(status => console.log(`Игрок ${status}`));
   console.log(level.grid);
+  console.log(level.actors);
+  console.log(level.width);
